@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.github.daggerok</groupId>
+  <artifactId>quarkus-reactive-pg</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <properties>
+    <vavr.version>0.10.0</vavr.version>
+    <lombok.version>1.18.8</lombok.version>
+    <quarkus.version>0.17.0</quarkus.version>
+
+    <java.version>1.8</java.version>
+    <maven.compiler.source>${java.version}</maven.compiler.source>
+    <maven.compiler.target>${java.version}</maven.compiler.target>
+
+    <encoding>UTF-8</encoding>
+    <project.build.sourceEncoding>${encoding}</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>${encoding}</project.reporting.outputEncoding>
+
+    <maven-clean-plugin.version>3.1.0</maven-clean-plugin.version>
+    <versions-maven-plugin.version>2.7</versions-maven-plugin.version>
+    <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+    <maven-assembly-plugin.version>3.1.1</maven-assembly-plugin.version>
+    <maven-failsafe-plugin.version>2.22.1</maven-failsafe-plugin.version>
+    <maven-surefire-plugin.version>3.0.0-M3</maven-surefire-plugin.version>
+    <docker-compose-maven-plugin.version>2.4.0</docker-compose-maven-plugin.version>
+    <docker-maven-plugin.version>0.28.0</docker-maven-plugin.version>
+    <flyway-maven-plugin.version>5.2.4</flyway-maven-plugin.version>
+    <!-- Flyway properties guides: -->
+    <!-- Properties are prefixed with flyway:
+    <flyway.user>myUser</flyway.user>
+    <flyway.password>mySecretPwd</flyway.password>
+    -->
+    <!-- List are defined as comma-separated values:
+    <flyway.schemas>schema1,schema2,schema3</flyway.schemas>
+    -->
+    <!-- Individual placeholders are prefixed by flyway.placeholders:
+    <flyway.placeholders.keyABC>valueXYZ</flyway.placeholders.keyABC>
+    <flyway.placeholders.otherplaceholder>value123</flyway.placeholders.otherplaceholder>
+    -->
+
+    <!-- settings.xml file: -->
+    <!-- By default Flyway will look for the server with the id 'flyway-db' -->
+    <!-- This can be customized by configuring the 'serverId' property -->
+    <!--
+    <settings>
+      <servers>
+        <server>
+          <id>flyway-db</id>
+          <username>myUser</username>
+          <password>mySecretPwd</password>
+        </server>
+      </servers>
+    </settings>
+    -->
+    <!-- docker postgres -->
+    <postgres.docker.name>healthcheck/postgres:alpine</postgres.docker.name>
+    <postgres.docker.log.prefix>postgres</postgres.docker.log.prefix>
+    <postgres.docker.ports.1>5432:5432</postgres.docker.ports.1>
+    <!--<postgres.docker.ports.1>${itest.postgres.port}:5432</postgres.docker.ports.1>-->
+    <postgres.docker.env.POSTGRES_DB>postgres</postgres.docker.env.POSTGRES_DB>
+    <postgres.docker.envRun.POSTGRES_USER>postgres</postgres.docker.envRun.POSTGRES_USER>
+    <postgres.docker.envRun.POSTGRES_PASSWORD>postgres</postgres.docker.envRun.POSTGRES_PASSWORD>
+    <postgres.docker.wait.time>10000</postgres.docker.wait.time>
+    <postgres.docker.wait.log>PostgreSQL init process complete</postgres.docker.wait.log>
+    <!-- postgres versions -->
+    <postgres.version>42.2.5</postgres.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-bom</artifactId>
+        <version>${quarkus.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <!-- flyway-maven-plugin -->
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>${postgres.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>${lombok.version}</version>
+      <optional>true</optional>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.vavr</groupId>
+      <artifactId>vavr</artifactId>
+      <version>${vavr.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-jsonp</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-jsonb</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-resteasy</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-health</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-metrics</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-openapi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-swagger-ui</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <defaultGoal>clean package</defaultGoal>
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-clean-plugin</artifactId>
+        <version>${maven-clean-plugin.version}</version>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>versions-maven-plugin</artifactId>
+        <version>${versions-maven-plugin.version}</version>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven-compiler-plugin.version}</version>
+        <configuration>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
+        </configuration>
+        <executions>
+          <execution>
+            <id>default-compile</id>
+            <phase>none</phase>
+          </execution>
+          <execution>
+            <id>default-testCompile</id>
+            <phase>none</phase>
+          </execution>
+          <execution>
+            <id>java-compile</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>java-test-compile</id>
+            <phase>test-compile</phase>
+            <goals>
+              <goal>testCompile</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-maven-plugin</artifactId>
+        <version>${quarkus.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>build</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven-surefire-plugin.version}</version>
+        <configuration>
+          <systemProperties>
+            <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+          </systemProperties>
+        </configuration>
+      </plugin>
+
+      <plugin><!-- zip -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>${maven-assembly-plugin.version}</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <appendAssemblyId>true</appendAssemblyId>
+              <descriptors>
+                <descriptor>src/main/assembly/sources.xml</descriptor>
+              </descriptors>
+              <ignoreMissingDescriptor>true</ignoreMissingDescriptor>
+              <descriptorRefs>src</descriptorRefs><!-- built-in descriptors: bin, jar-with-dependencies, src, project -->
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>docker</id>
+
+      <build>
+        <plugins>
+          <!-- docker postgres -->
+          <plugin>
+            <groupId>io.fabric8</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
+            <version>${docker-maven-plugin.version}</version>
+            <configuration>
+              <allContainers>true</allContainers>
+              <removeVolumes>true</removeVolumes>
+              <watchInterval>500</watchInterval>
+              <logDate>default</logDate>
+              <verbose>true</verbose>
+              <autoPull>always</autoPull>
+              <images>
+                <image>
+                  <external>
+                    <type>properties</type>
+                    <prefix>postgres.docker</prefix>
+                  </external>
+                </image>
+              </images>
+            </configuration>
+          </plugin>
+
+          <!-- flyway -->
+          <plugin>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-maven-plugin</artifactId>
+            <version>${flyway-maven-plugin.version}</version>
+            <configuration>
+              <user>postgres</user>
+              <password>postgres</password>
+              <url>jdbc:postgresql://127.0.0.1:5432/postgres</url>
+              <locations>
+                <location>classpath:db/migration</location>
+              </locations>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>uberJar</id>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-maven-plugin</artifactId>
+            <version>${quarkus.version}</version>
+            <configuration>
+              <uberJar>true</uberJar>
+              <!--<ignoredEntries>
+                <ignoredEntry>META-INF/DEPENDENCIES.txt</ignoredEntry>
+              </ignoredEntries>-->
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>build</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>docker-compose</id>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.dkanejs.maven.plugins</groupId>
+            <artifactId>docker-compose-maven-plugin</artifactId>
+            <version>${docker-compose-maven-plugin.version}</version>
+            <configuration>
+              <composeFiles>
+                <composeFile>${project.basedir}/src/main/docker/docker-compose.yaml</composeFile>
+              </composeFiles>
+              <detachedMode>true</detachedMode>
+              <removeVolumes>true</removeVolumes>
+              <removeOrphans>true</removeOrphans>
+              <removeImages>true</removeImages>
+              <removeImagesType>local</removeImagesType>
+              <build>true</build>
+              <detail>true</detail>
+              <verbose>false</verbose>
+              <projectName>quarkus</projectName>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>native</id>
+
+      <activation>
+        <property>
+          <name>native</name>
+        </property>
+      </activation>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-maven-plugin</artifactId>
+            <version>${quarkus.version}</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>native-image</goal>
+                </goals>
+                <configuration>
+                  <enableHttpUrlHandler>true</enableHttpUrlHandler>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <version>${maven-failsafe-plugin.version}</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+                <configuration>
+                  <systemProperties>
+                    <native.image.path>${project.build.directory}/${project.build.finalName}-runner</native.image.path>
+                  </systemProperties>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
+</project>
