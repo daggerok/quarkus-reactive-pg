@@ -14,8 +14,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import static java.util.Collections.singletonMap;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -41,14 +44,19 @@ public class ClientResource {
   @Bulkhead
   @Timeout(1500)
   @Fallback(fallbackMethod = "getHelloFallback")
-  public Map<String, List<Employee>> getClient() {
-    log.info("getClient()");
-    String hello = helloRestClient.getHello();
-    List<Employee> employees = employeeRestClient.getEmployees();
-    return singletonMap(hello, employees);
+  public CompletionStage<Map<String, List<Employee>>> getClient() {
+    log.info("compute async");
+    CompletableFuture<String> hello = CompletableFuture.supplyAsync(() -> helloRestClient.getHello());
+    CompletableFuture<List<Employee>> list = CompletableFuture.supplyAsync(() -> employeeRestClient.getEmployees());
+    log.info("compose results");
+    return hello.thenCombine(list, Collections::singletonMap)
+                .whenCompleteAsync((map, err) -> log.info("{} / {}", map, err))
+                .exceptionally(throwable -> singletonMap("error", new ArrayList<>()));
   }
 
-  public Map<String, List<Employee>> getHelloFallback() {
-    return singletonMap("error", new ArrayList<>());
+  public CompletionStage<Map<String, List<Employee>>> getHelloFallback() {
+    return CompletableFuture.supplyAsync(
+        () -> singletonMap("error", new ArrayList<>())
+    );
   }
 }
