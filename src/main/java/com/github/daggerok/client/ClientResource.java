@@ -39,7 +39,7 @@ public class ClientResource {
   @GET
   @Path("")
   @Bulkhead
-  @Timeout(500)
+  @Timeout(1500)
   @Fallback(fallbackMethod = "getHelloFallback")
   public Map<String, List<Employee>> getClient() {
     log.info("getClient()");

@@ -44,7 +44,7 @@ before_install:
   - stop_any 80 8001 8002 8080 5432
 before_script:
   - docker pull healthcheck/postgres:alpine
-  - ./mvnw -Pdocker docker:start
+  - ./mvnw -Pdocker docker:start -U
   - docker ps
 after_script:
   - ./mvnw -Pdocker docker:stop
@@ -55,54 +55,85 @@ jobs:
   include:
     - stage: test
       jdk: openjdk8
-      name: Run maven tests (openjdk8)
+      name: Run maven tests
       script: cd $TRAVIS_BUILD_DIR && ./mvnw clean test -U
     - stage: test
       jdk: openjdk8
-      name: Build uberJar profile and run integration tests (openjdk8)
+      name: Run maven tests openjdk11
+      script: cd $TRAVIS_BUILD_DIR && ./mvnw clean test -U
+    - stage: test
+      jdk: openjdk8
+      name: Build uberJar profile and run integration tests
       script:
         - cd $TRAVIS_BUILD_DIR && ./mvnw -DskipTests package -PuberJar -U
         - java -jar target/*-runner.jar &
         - wait_for 8080
-        - sleep 3s
+        - sleep 5s
         - http :8080/health
+        - http :8080/api/client/hello
+        - http :8080/api/client/hello
+        - stop_any 80 8080
+    - stage: test
+      jdk: openjdk11
+      name: Build uberJar profile and run integration tests openjdk11
+      script:
+        - cd $TRAVIS_BUILD_DIR && ./mvnw -DskipTests package -PuberJar -U
+        - java -jar target/*-runner.jar &
+        - wait_for 8080
+        - sleep 5s
+        - http :8080/health
+        - http :8080/api/client/hello
         - http :8080/api/client/hello
         - stop_any 80 8080
     - stage: test
       jdk: openjdk8
-      name: Build quarkus uberJar and run integration tests (openjdk8)
+      name: Build quarkus uberJar and run integration tests
       script:
         - cd $TRAVIS_BUILD_DIR && ./mvnw compile jar:jar quarkus:build -U
         - java -jar target/*-runner.jar &
         - wait_for 8080
-        - sleep 3s
+        - sleep 5s
         - http :8080/health
+        - http :8080/api/client/hello
+        - http :8080/api/client/hello
+        - stop_any 80 8080
+    - stage: test
+      jdk: openjdk11
+      name: Build quarkus uberJar and run integration tests openjdk11
+      script:
+        - cd $TRAVIS_BUILD_DIR && ./mvnw compile jar:jar quarkus:build -U
+        - java -jar target/*-runner.jar &
+        - wait_for 8080
+        - sleep 5s
+        - http :8080/health
+        - http :8080/api/client/hello
         - http :8080/api/client/hello
         - stop_any 80 8080
     - stage: test
       jdk: openjdk8
-      name: Test app with maven docker-compose plugin (openjdk8)
+      name: Test app with maven docker-compose plugin
       script:
         - cd $TRAVIS_BUILD_DIR && ./mvnw -P docker-compose compile jar:jar quarkus:build docker-compose:up -U
-        - sleep 3s
+        - sleep 5s
         - http :8080/health
+        - http :8080/api/client/hello
         - http :8080/api/client/hello
         - cd $TRAVIS_BUILD_DIR && ./mvnw -P docker-compose docker-compose:down
     - stage: test
       jdk: openjdk8
-      name: Test Dockerfile.jvm (openjdk8)
+      name: Test Dockerfile.jvm
       script:
         - cd $TRAVIS_BUILD_DIR && ./mvnw clean compile jar:jar quarkus:build -U
         - docker build -f src/main/docker/Dockerfile.jvm -t quarkus/quarkus-example-jvm .
         - docker run -i --rm --name jvm-app -p 8080:8080 quarkus/quarkus-example-jvm &
         - wait_for 8080
-        - sleep 3s
+        - sleep 5s
         - http :8080/health
         - http :8080/api/client/hello
         - docker rm -f -v jvm-app
     - stage: test
       jdk: openjdk8
-      name: Test Dockerfile.native (openjdk8)
+      name: Test Dockerfile.native
       script:
         - cd $TRAVIS_BUILD_DIR && ./mvnw package -Pnative -Dnative-image.docker-build=true -U
         - docker build -f src/main/docker/Dockerfile.native -t quarkus/quarkus-example-native .
@@ -112,9 +143,13 @@ jobs:
         - http :8080/health
         - http :8080/api/client/hello
         - docker rm -f -v native-app
-    - stage: maintain
+    - stage: test
       jdk: openjdk8
-      name: Run mvn versions:display-property-updates command (openjdk8)
+      name: Run mvn versions:display-property-updates command
+      script: cd $TRAVIS_BUILD_DIR && ./mvnw versions:display-property-updates -U
+    - stage: test
+      jdk: openjdk11
+      name: Run mvn versions:display-property-updates command openjdk11
       script: cd $TRAVIS_BUILD_DIR && ./mvnw versions:display-property-updates -U
 cache:
   directories:
