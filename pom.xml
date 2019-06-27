@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.daggerok</groupId>
@@ -21,6 +20,19 @@
     <project.build.sourceEncoding>${encoding}</project.build.sourceEncoding>
     <project.reporting.outputEncoding>${encoding}</project.reporting.outputEncoding>
 
+    <flyway-maven-plugin.version>5.2.4</flyway-maven-plugin.version>
+    <docker-maven-plugin.version>0.28.0</docker-maven-plugin.version>
+
+    <postgres.docker.envRun.POSTGRES_USER>postgres</postgres.docker.envRun.POSTGRES_USER>
+    <postgres.docker.env.POSTGRES_DB>postgres</postgres.docker.env.POSTGRES_DB>
+    <postgres.version>42.2.5</postgres.version>
+    <postgres.docker.wait.log>PostgreSQL init process complete</postgres.docker.wait.log>
+    <postgres.docker.envRun.POSTGRES_PASSWORD>postgres</postgres.docker.envRun.POSTGRES_PASSWORD>
+    <postgres.docker.name>healthcheck/postgres:alpine</postgres.docker.name>
+    <postgres.docker.ports.1>5432:5432</postgres.docker.ports.1>
+    <postgres.docker.log.prefix>postgres</postgres.docker.log.prefix>
+    <postgres.docker.wait.time>10000</postgres.docker.wait.time>
+
     <maven-clean-plugin.version>3.1.0</maven-clean-plugin.version>
     <versions-maven-plugin.version>2.7</versions-maven-plugin.version>
     <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
@@ -28,47 +40,6 @@
     <maven-failsafe-plugin.version>2.22.1</maven-failsafe-plugin.version>
     <maven-surefire-plugin.version>3.0.0-M3</maven-surefire-plugin.version>
     <docker-compose-maven-plugin.version>2.4.0</docker-compose-maven-plugin.version>
-    <docker-maven-plugin.version>0.28.0</docker-maven-plugin.version>
-    <flyway-maven-plugin.version>5.2.4</flyway-maven-plugin.version>
-    <!-- Flyway properties guides: -->
-    <!-- Properties are prefixed with flyway:
-    <flyway.user>myUser</flyway.user>
-    <flyway.password>mySecretPwd</flyway.password>
-    -->
-    <!-- List are defined as comma-separated values:
-    <flyway.schemas>schema1,schema2,schema3</flyway.schemas>
-    -->
-    <!-- Individual placeholders are prefixed by flyway.placeholders:
-    <flyway.placeholders.keyABC>valueXYZ</flyway.placeholders.keyABC>
-    <flyway.placeholders.otherplaceholder>value123</flyway.placeholders.otherplaceholder>
-    -->
-
-    <!-- settings.xml file: -->
-    <!-- By default Flyway will look for the server with the id 'flyway-db' -->
-    <!-- This can be customized by configuring the 'serverId' property -->
-    <!--
-    <settings>
-      <servers>
-        <server>
-          <id>flyway-db</id>
-          <username>myUser</username>
-          <password>mySecretPwd</password>
-        </server>
-      </servers>
-    </settings>
-    -->
-    <!-- docker postgres -->
-    <postgres.docker.name>healthcheck/postgres:alpine</postgres.docker.name>
-    <postgres.docker.log.prefix>postgres</postgres.docker.log.prefix>
-    <postgres.docker.ports.1>5432:5432</postgres.docker.ports.1>
-    <!--<postgres.docker.ports.1>${itest.postgres.port}:5432</postgres.docker.ports.1>-->
-    <postgres.docker.env.POSTGRES_DB>postgres</postgres.docker.env.POSTGRES_DB>
-    <postgres.docker.envRun.POSTGRES_USER>postgres</postgres.docker.envRun.POSTGRES_USER>
-    <postgres.docker.envRun.POSTGRES_PASSWORD>postgres</postgres.docker.envRun.POSTGRES_PASSWORD>
-    <postgres.docker.wait.time>10000</postgres.docker.wait.time>
-    <postgres.docker.wait.log>PostgreSQL init process complete</postgres.docker.wait.log>
-    <!-- postgres versions -->
-    <postgres.version>42.2.5</postgres.version>
   </properties>
 
   <dependencyManagement>
@@ -84,7 +55,6 @@
   </dependencyManagement>
 
   <dependencies>
-    <!-- flyway-maven-plugin -->
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
@@ -96,8 +66,8 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <version>${lombok.version}</version>
-      <optional>true</optional>
       <scope>provided</scope>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>io.vavr</groupId>
@@ -111,12 +81,22 @@
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-jsonb</artifactId>
+      <artifactId>quarkus-resteasy-jsonb</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-resteasy</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-jdbc-h2</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-reactive-pg-client</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-smallrye-health</artifactId>
@@ -133,6 +113,19 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-swagger-ui</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-fault-tolerance</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-rest-client</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-kubernetes</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -148,28 +141,19 @@
 
   <build>
     <defaultGoal>clean package</defaultGoal>
-
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-clean-plugin</artifactId>
         <version>${maven-clean-plugin.version}</version>
       </plugin>
-
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>versions-maven-plugin</artifactId>
         <version>${versions-maven-plugin.version}</version>
       </plugin>
-
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>${maven-compiler-plugin.version}</version>
-        <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
-        </configuration>
         <executions>
           <execution>
             <id>default-compile</id>
@@ -194,8 +178,11 @@
             </goals>
           </execution>
         </executions>
+        <configuration>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
+        </configuration>
       </plugin>
-
       <plugin>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-maven-plugin</artifactId>
@@ -208,9 +195,7 @@
           </execution>
         </executions>
       </plugin>
-
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${maven-surefire-plugin.version}</version>
         <configuration>
@@ -219,9 +204,7 @@
           </systemProperties>
         </configuration>
       </plugin>
-
-      <plugin><!-- zip -->
-        <groupId>org.apache.maven.plugins</groupId>
+      <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <version>${maven-assembly-plugin.version}</version>
         <executions>
@@ -236,21 +219,18 @@
                 <descriptor>src/main/assembly/sources.xml</descriptor>
               </descriptors>
               <ignoreMissingDescriptor>true</ignoreMissingDescriptor>
-              <descriptorRefs>src</descriptorRefs><!-- built-in descriptors: bin, jar-with-dependencies, src, project -->
+              <descriptorRefs>src</descriptorRefs>
             </configuration>
           </execution>
         </executions>
       </plugin>
     </plugins>
   </build>
-
   <profiles>
     <profile>
       <id>docker</id>
-
       <build>
         <plugins>
-          <!-- docker postgres -->
           <plugin>
             <groupId>io.fabric8</groupId>
             <artifactId>docker-maven-plugin</artifactId>
@@ -272,8 +252,6 @@
               </images>
             </configuration>
           </plugin>
-
-          <!-- flyway -->
           <plugin>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-maven-plugin</artifactId>
@@ -290,22 +268,14 @@
         </plugins>
       </build>
     </profile>
-
     <profile>
       <id>uberJar</id>
-
       <build>
         <plugins>
           <plugin>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-maven-plugin</artifactId>
             <version>${quarkus.version}</version>
-            <configuration>
-              <uberJar>true</uberJar>
-              <!--<ignoredEntries>
-                <ignoredEntry>META-INF/DEPENDENCIES.txt</ignoredEntry>
-              </ignoredEntries>-->
-            </configuration>
             <executions>
               <execution>
                 <goals>
@@ -313,14 +283,15 @@
                 </goals>
               </execution>
             </executions>
+            <configuration>
+              <uberJar>true</uberJar>
+            </configuration>
           </plugin>
         </plugins>
       </build>
     </profile>
-
     <profile>
       <id>docker-compose</id>
-
       <build>
         <plugins>
           <plugin>
@@ -345,16 +316,13 @@
         </plugins>
       </build>
     </profile>
-
     <profile>
       <id>native</id>
-
       <activation>
         <property>
           <name>native</name>
         </property>
       </activation>
-
       <build>
         <plugins>
           <plugin>
@@ -372,9 +340,7 @@
               </execution>
             </executions>
           </plugin>
-
           <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-failsafe-plugin</artifactId>
             <version>${maven-failsafe-plugin.version}</version>
             <executions>
@@ -395,5 +361,4 @@
       </build>
     </profile>
   </profiles>
-
 </project>

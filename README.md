@@ -4,13 +4,15 @@ Quarkus micro-profile starter using Gradle / Maven build tools.
 _getting started_
 
 ```bash
-./mvnw docker:start
+./mvnw -Pdocker docker:start
 
 #./mvnw process-resources flyway:migrate
 ./mvnw compile quarkus:dev
 
-./mvnw docker:stop
+./mvnw -Pdocker docker:stop
 ```
+
+<!--
 
 _maven dev mode_
 
@@ -97,4 +99,54 @@ mvn io.quarkus:quarkus-maven-plugin:0.17.0:create \
   -Dpath="/"
 ```
 
-NOTE: _This project has been based on [GitHub: daggerok/main-starter](https://github.com/daggerok/main-starter)_
+-->
+
+## MicroProfile static typed RestClient
+
+_add rest-client extension_
+
+```bash
+ ./mvnw quarkus:add-extensions -Dextensions="quarkus-smallrye-rest-client"
+```
+
+_or directly in pom.xml_
+
+```xml
+<dependencies>
+  <dependency>
+    <groupId>io.quarkus</groupId>
+    <artifactId>quarkus-smallrye-rest-client</artifactId>
+  </dependency>
+</dependencies>
+```
+
+_declare proxy interface: HelloRestClient.java_
+
+```java
+import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+
+@Path("/")
+@RegisterRestClient
+public interface HelloRestClient {
+
+  @GET
+  @Produces(APPLICATION_JSON)
+  String getHello();
+}
+```
+
+_usage_
+
+```java
+@Inject
+@RestClient
+HelloRestClient restClient;
+// ...
+var greeting = restClient.getHello();
+```
+
+## resources
+
+* [YouTube: Build Eclipse MicroProfile apps quickly with Quarkus | Jakarta TechTalks](https://www.youtube.com/watch?v=hReKM6rmcho)
+
+_NOTE: This project has been based on [GitHub: daggerok/main-starter](https://github.com/daggerok/main-starter)_
