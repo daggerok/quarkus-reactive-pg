@@ -25,7 +25,7 @@
 
     <postgres.docker.envRun.POSTGRES_USER>postgres</postgres.docker.envRun.POSTGRES_USER>
     <postgres.docker.env.POSTGRES_DB>postgres</postgres.docker.env.POSTGRES_DB>
-    <postgres.version>42.2.5</postgres.version>
+    <postgres.version>42.3.3</postgres.version>
     <postgres.docker.wait.log>PostgreSQL init process complete</postgres.docker.wait.log>
     <postgres.docker.envRun.POSTGRES_PASSWORD>postgres</postgres.docker.envRun.POSTGRES_PASSWORD>
     <postgres.docker.name>healthcheck/postgres:alpine</postgres.docker.name>
